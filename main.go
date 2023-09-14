@@ -43,7 +43,10 @@ import (
 func main() {
 	ctx, ctxC := context.WithCancel(context.Background())
 
+	// buffered channel for synchronous os signal control - AMB 14SEP2023 
 	signals := make(chan os.Signal, 1)
+
+	// first signal for kick-off/startup - AMB 14SEP2023 
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		sig := <-signals
@@ -61,12 +64,18 @@ func main() {
 		}
 	}()
 
+	// client service confiration - AMB 14SEP2023 
 	ops := []client.Option{client.URL(common.DefaultDreamlandURL), client.Timeout(300 * time.Second)}
+
+	// client service startup - AMB 14SEP2023 
 	multiverse, err := client.New(ctx, ops...)
+
+	// fatal service exception handler - AMB 14SEP2023 
 	if err != nil {
 		log.Fatalf("Starting new dreamland client failed with: %s", err.Error())
 	}
 
+	// CLI configuration - AMB 14SEP2023 
 	err = defineCLI(&common.Context{Ctx: ctx, Multiverse: multiverse}).RunContext(ctx, os.Args)
 	if err != nil {
 		log.Fatal(err)
